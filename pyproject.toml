@@ -1,0 +1,21 @@
+[project]
+name = "samplebot"
+version = "0.1.0"
+description = "CLI-first API for generating sound effects from text prompts with local open-weight models"
+readme = "README.md"
+authors = [{ name = "Moritz Laass", email = "moritz.laass@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+gpu = ["torch>=2.8", "diffusers>=0.32", "transformers>=4.45", "accelerate>=1.0"]
+
+[project.scripts]
+samplebot = "samplebot.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
