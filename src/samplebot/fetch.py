@@ -37,7 +37,7 @@ def list_files(repo: str) -> list[tuple[str, int]]:
         sib = json.load(r)["siblings"]
     dirs_with_safetensors = {os.path.dirname(s["rfilename"]) for s in sib if s["rfilename"].endswith(".safetensors")}
     return [(s["rfilename"], int(s.get("size") or 0)) for s in sib
-            if not (s["rfilename"].endswith(".bin") and os.path.dirname(s["rfilename"]) in dirs_with_safetensors)]  # skip duplicate weights
+            if not (s["rfilename"].endswith((".bin", ".msgpack", ".h5", ".ckpt")) and os.path.dirname(s["rfilename"]) in dirs_with_safetensors)]  # skip duplicate weights
 
 
 def download(url: str, dest: Path, size: int, workers: int = 12, log=sys.stderr) -> Path:

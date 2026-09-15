@@ -15,7 +15,7 @@ class RangeHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.startswith("/api/models/"):
-            body = json.dumps({"siblings": [{"rfilename": "unet/w.safetensors", "size": len(BLOB)}, {"rfilename": "unet/pytorch_model.bin", "size": 1},
+            body = json.dumps({"siblings": [{"rfilename": "unet/w.safetensors", "size": len(BLOB)}, {"rfilename": "unet/pytorch_model.bin", "size": 1}, {"rfilename": "unet/flax_model.msgpack", "size": 1},
                                             {"rfilename": "config.json", "size": 2}]}).encode()
             return self._send(200, body)
         if self.path.endswith("config.json"):
@@ -56,7 +56,7 @@ def test_fetch_parallel_ranges_with_retry_and_skips_duplicate_bin(hub, tmp_path)
     RangeHandler.fail_first = {300_000}
     dest = fetch.fetch("acme/model", workers=4, log=io.StringIO())
     assert (dest / "unet/w.safetensors").read_bytes() == BLOB
-    assert not (dest / "unet/pytorch_model.bin").exists() and (dest / "config.json").exists()
+    assert not (dest / "unet/pytorch_model.bin").exists() and not (dest / "unet/flax_model.msgpack").exists() and (dest / "config.json").exists()
     assert not list(dest.rglob("*.part")) and not list(dest.rglob("*.done"))
     assert fetch.model_path("acme/model") == str(dest) and fetch.model_path("acme/other") == "acme/other"
 
