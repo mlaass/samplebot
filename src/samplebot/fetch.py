@@ -35,14 +35,9 @@ def _open(url: str, headers: dict, timeout=60):
 def list_files(repo: str) -> list[tuple[str, int]]:
     with _open(f"{HF}/api/models/{repo}?blobs=true", {}) as r:
         sib = json.load(r)["siblings"]
-    names = {s["rfilename"] for s in sib}
-    keep = []
-    for s in sib:
-        n = s["rfilename"]
-        if n.endswith(".bin") and n[:-4] + ".safetensors" in names:
-            continue  # duplicate weights
-        keep.append((n, int(s.get("size") or 0)))
-    return keep
+    dirs_with_safetensors = {os.path.dirname(s["rfilename"]) for s in sib if s["rfilename"].endswith(".safetensors")}
+    return [(s["rfilename"], int(s.get("size") or 0)) for s in sib
+            if not (s["rfilename"].endswith(".bin") and os.path.dirname(s["rfilename"]) in dirs_with_safetensors)]  # skip duplicate weights
 
 
 def download(url: str, dest: Path, size: int, workers: int = 12, log=sys.stderr) -> Path:
