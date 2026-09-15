@@ -13,6 +13,8 @@ from pathlib import Path
 
 import numpy as np
 
+from samplebot.fetch import model_path
+
 ROOT = Path(__file__).resolve().parents[3]
 PYTHON = os.environ.get("SAMPLEBOT_MOSS_PYTHON", str(ROOT / "vendor/moss-venv/bin/python"))
 WORKER = Path(__file__).with_name("moss_worker.py")
@@ -23,7 +25,7 @@ def worker() -> subprocess.Popen:
     if not Path(PYTHON).exists():
         raise RuntimeError(f"{PYTHON} not found: create the MOSS venv first (docs/usage.md, 'MOSS-SoundEffect')")
     p = subprocess.Popen([PYTHON, "-u", str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
-                         env={**os.environ, "HF_HUB_ENABLE_HF_TRANSFER": os.environ.get("HF_HUB_ENABLE_HF_TRANSFER", "1")})
+                         env={**os.environ, "SAMPLEBOT_MOSS": os.environ.get("SAMPLEBOT_MOSS") or model_path("OpenMOSS-Team/MOSS-SoundEffect-v2.0")})
     line = p.stdout.readline()  # blocks until the model is loaded
     if not line:
         raise RuntimeError(f"moss worker exited with {p.wait()} before becoming ready")
