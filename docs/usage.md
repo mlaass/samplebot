@@ -41,6 +41,16 @@ uv run samplebot optimize "rain on roof"
 
 Env: `OLLAMA_HOST` (default `http://localhost:11434`), `SAMPLEBOT_LLM` (default `qwen2.5:7b-instruct`).
 
+## Dashboard
+
+```bash
+uv run samplebot serve            # http://127.0.0.1:8765/ , serves ./out
+uv run samplebot serve -d ~/sfx --port 9000
+```
+
+Lists every run (newest first) with its prompt, keywords, model, seconds, seed and steps, with an inline player and a
+text filter. Stdlib `http.server`, no build step: it reads the `.json` sidecars next to the `.wav` files.
+
 ## Python API
 
 ```python

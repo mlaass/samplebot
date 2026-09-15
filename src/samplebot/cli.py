@@ -31,6 +31,11 @@ def build_parser():
     o = sub.add_parser("optimize", help="rewrite a prompt with a local LLM and print it")
     o.add_argument("prompt")
     o.add_argument("--llm", default=None)
+
+    sv = sub.add_parser("serve", help="dashboard: browse and listen to previous runs")
+    sv.add_argument("-d", "--dir", type=Path, default=Path("out"))
+    sv.add_argument("--host", default="127.0.0.1")
+    sv.add_argument("--port", type=int, default=8765)
     return p
 
 
@@ -60,12 +65,19 @@ def cmd_optimize(a) -> int:
     return 0
 
 
+def cmd_serve(a) -> int:
+    from samplebot.dashboard import serve
+
+    serve(a.dir, a.host, a.port)
+    return 0
+
+
 def main(argv=None) -> int:
     a = build_parser().parse_args(argv)
     if a.cmd == "models":
         print("\n".join(BACKENDS))
         return 0
-    return {"gen": cmd_gen, "optimize": cmd_optimize}[a.cmd](a)
+    return {"gen": cmd_gen, "optimize": cmd_optimize, "serve": cmd_serve}[a.cmd](a)
 
 
 if __name__ == "__main__":

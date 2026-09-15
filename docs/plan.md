@@ -29,6 +29,7 @@ over positive/negative keywords and optional prompt optimization by a local LLM 
 1. Package skeleton (uv), `Prompt` model, `fake` backend, argparse CLI, Ollama optimizer, tests. ✅
 2. GPU backends: AudioLDM2 (verified: rain, footsteps, 7 s per clip), Stable Audio Open (code only, needs token). Pinned `transformers<4.50`. ✅
 3. Docs: this plan, usage. ✅
+3b. Dashboard: `samplebot serve`, stdlib http.server + one HTML page over the `.json` sidecars. ✅
 4. Next iteration candidates (not built, add when needed):
    - HTTP API (FastAPI wrapper around `samplebot.generate`) once something other than the shell calls it.
    - MOSS-SoundEffect v2 backend behind an extra, once ~12 GB disk is available.
