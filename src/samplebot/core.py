@@ -45,6 +45,7 @@ def write_wav(path: Path, audio: np.ndarray, sr: int, meta: dict | None = None) 
     """16-bit PCM WAV via stdlib. audio is [channels, samples] in [-1, 1]. Writes a .json sidecar if meta given."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    audio = audio / max(1.0, float(np.abs(audio).max()))  # scale down only if a backend overshoots full scale (stable-audio does)
     pcm = (np.clip(audio, -1, 1) * 32767).astype("<i2").T  # [T, C] interleaved
     with wave.open(str(path), "wb") as w:
         w.setnchannels(audio.shape[0])

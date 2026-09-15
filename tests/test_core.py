@@ -38,6 +38,12 @@ def test_write_wav_roundtrip(tmp_path):
     assert json.loads(path.with_suffix(".json").read_text()) == {"k": 1}
 
 
+def test_write_wav_scales_down_overshoot(tmp_path):
+    path = write_wav(tmp_path / "loud.wav", np.array([[2.0, -1.0, 0.5]], dtype=np.float32), 8000)
+    with wave.open(str(path)) as w:
+        assert list(np.frombuffer(w.readframes(3), "<i2")) == [32767, -16383, 8191]
+
+
 def test_cli_gen(tmp_path, capsys, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert main(["gen", "Wind howling", "-n", "music", "-s", "0.2", "-c", "2"]) == 0

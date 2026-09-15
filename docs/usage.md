@@ -104,11 +104,16 @@ After the first download, `HF_HUB_OFFLINE=1` skips the Hub round-trip and loads 
 | `audioldm2` | `cvssp/audioldm2` | 16 kHz mono | yes | 4.5 GB | default 200 steps, ~7 s per 5 s clip at 50 |
 | `tangoflux` | `declare-lab/TangoFlux` | 44.1 kHz stereo, ≤ 30 s | yes (used as the CFG unconditional text) | 4 GB + 3 GB flan-t5-large | CC-BY-NC, inference vendored in `backends/tangoflux.py`; 5 s clip in ~14 s at 50 steps |
 | `moss` | `OpenMOSS-Team/MOSS-SoundEffect-v2.0` | 48 kHz, ≤ 30 s | yes | 11 GB | Apache-2.0, needs the separate venv below, default 100 steps (~26 s per 5 s clip after the first call); output is quiet, normalize downstream |
-| `stable-audio` | `stabilityai/stable-audio-open-1.0` | 44.1 kHz stereo, ≤ 47 s | yes | 5 GB | gated, needs `HF_TOKEN` |
+| `stable-audio` | `stabilityai/stable-audio-open-1.0` | 44.1 kHz stereo, ≤ 47 s | yes | 5 GB | gated, needs `HF_TOKEN`; 5 s clip in ~19 s at 100 steps |
 
 - **audioldm2** — `cvssp/audioldm2`, ungated, 16 kHz mono. ~7 s per 5 s clip at 50 steps on an RTX 5060 Ti (fp16). Needs `transformers<4.50` (pinned): newer versions drop a GPT2 helper the diffusers pipeline still calls. Override with `SAMPLEBOT_AUDIOLDM2=cvssp/audioldm2-large`.
 - **stable-audio** — `stabilityai/stable-audio-open-1.0`, 44.1 kHz stereo, up to 47 s. Gated: accept the license on
-  Hugging Face, then `export HF_TOKEN=hf_...` (or `uv run hf auth login`).
+  the model page, create a read token under Settings → Access Tokens, and put `HF_TOKEN=hf_...` in `.env` (git-ignored,
+  the CLI loads it). Fetch only the diffusers layout:
+
+  ```bash
+  uv run samplebot fetch stabilityai/stable-audio-open-1.0 -j 40 -x model.safetensors -x "*.ckpt" -x "*.csv" -x "*.png"
+  ```
 - **moss** — MOSS-SoundEffect v2 pins `transformers==4.57.1` and `diffusers==0.37.1`, which conflict with the AudioLDM2
   pin, so it gets its own venv and runs as a worker subprocess (`backends/moss_worker.py`). One-time setup:
 
