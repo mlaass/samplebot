@@ -10,7 +10,7 @@ uv run samplebot serve                                       # dashboard: browse
 ```
 
 - Positive/negative keywords (`-p`, `-n`), seeds, variations, step count.
-- Backends: `audioldm2` (ungated), `stable-audio` (needs HF token), `fake` (tests).
+- Backends: `audioldm`, `audioldm2`, `tangoflux`, `moss`, `stable-audio` (needs HF token), `fake` (tests). All verified on an RTX 5060 Ti.
 - Optional prompt optimization through Ollama, stdlib only.
 
 Docs: [usage](docs/usage.md) · [plan](docs/plan.md) · [model survey](docs/start.md)
