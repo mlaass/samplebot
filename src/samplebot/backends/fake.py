@@ -13,3 +13,7 @@ def generate(prompt: str, negative: str, seconds: float, seed: int, steps: int):
     rng = np.random.default_rng(seed)
     tone = np.sin(2 * np.pi * freq * t) * np.exp(-t) + 0.01 * rng.standard_normal(t.size)
     return tone.astype(np.float32)[None, :] * 0.5, SR
+
+
+def unload():
+    pass

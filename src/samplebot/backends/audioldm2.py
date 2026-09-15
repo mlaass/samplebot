@@ -32,3 +32,13 @@ def generate(prompt: str, negative: str, seconds: float, seed: int, steps: int):
         generator=torch.Generator(p.device).manual_seed(seed),
     )
     return np.asarray(out.audios[0], dtype=np.float32)[None, :], SR
+
+
+def unload():
+    import gc
+
+    import torch
+
+    pipe.cache_clear()
+    gc.collect()
+    torch.cuda.empty_cache()

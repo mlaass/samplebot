@@ -33,3 +33,13 @@ def generate(prompt: str, negative: str, seconds: float, seed: int, steps: int):
     )
     audio = out.audios[0].float().cpu().numpy()  # [C, T]
     return np.asarray(audio, dtype=np.float32), p.vae.sampling_rate
+
+
+def unload():
+    import gc
+
+    import torch
+
+    pipe.cache_clear()
+    gc.collect()
+    torch.cuda.empty_cache()

@@ -48,3 +48,12 @@ def generate(prompt: str, negative: str, seconds: float, seed: int, steps: int):
         return np.load(out).astype(np.float32), reply["sr"]
     finally:
         Path(out).unlink(missing_ok=True)
+
+
+def unload():
+    """Stop the worker process; it holds the model on the GPU."""
+    if worker.cache_info().currsize:
+        p = worker()
+        p.stdin.close()  # EOF ends the worker loop
+        p.wait(timeout=30)
+    worker.cache_clear()

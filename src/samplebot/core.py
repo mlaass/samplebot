@@ -31,11 +31,18 @@ class Prompt:
         return ", ".join(k.strip() for k in self.negative)
 
 
+_loaded = None  # ponytail: one model resident at a time, the GPU has 16 GB and moss alone takes 9
+
+
 def generate(prompt: Prompt, model: str = "fake", seconds: float = 5.0, seed: int = 0, steps: int = 0):
     """Returns (audio float32 array of shape [channels, samples], sample_rate)."""
+    global _loaded
     if model not in BACKENDS:
         raise ValueError(f"unknown model {model!r}, choose from {', '.join(BACKENDS)}")
     backend = importlib.import_module(BACKENDS[model])
+    if _loaded is not None and _loaded is not backend:
+        _loaded.unload()  # free the previous model's VRAM before loading another
+    _loaded = backend
     audio, sr = backend.generate(prompt.positive_text(), prompt.negative_text(), seconds, seed, steps)
     audio = np.atleast_2d(np.asarray(audio, dtype=np.float32))
     return audio, sr

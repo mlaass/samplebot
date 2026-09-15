@@ -103,3 +103,13 @@ def generate(prompt: str, negative: str, seconds: float, seed: int, steps: int, 
             latents = sched.step(u + guidance * (c - u), t, latents).prev_sample
         wave = vae.decode(latents.transpose(2, 1)).sample[0, :, : int(seconds * SR)]
     return wave.float().cpu().numpy(), SR
+
+
+def unload():
+    import gc
+
+    import torch
+
+    load.cache_clear()
+    gc.collect()
+    torch.cuda.empty_cache()

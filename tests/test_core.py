@@ -58,6 +58,29 @@ def test_cli_models(capsys):
     assert "fake" in capsys.readouterr().out.split()
 
 
+def test_switching_models_unloads_previous(monkeypatch):
+    import sys
+    import types
+
+    import samplebot.core as core
+
+    calls = []
+    other = types.ModuleType("samplebot.backends.other")
+    other.generate = lambda *a: (np.zeros((1, 8), np.float32), 8000)
+    other.unload = lambda: calls.append("other")
+    monkeypatch.setitem(sys.modules, "samplebot.backends.other", other)
+    monkeypatch.setitem(core.BACKENDS, "other", "samplebot.backends.other")
+    import samplebot.backends.fake as fake
+
+    monkeypatch.setattr(fake, "unload", lambda: calls.append("fake"))
+    monkeypatch.setattr(core, "_loaded", None)
+    generate(Prompt("a"), "fake", 0.01)
+    generate(Prompt("a"), "fake", 0.01)  # same model: no unload
+    generate(Prompt("a"), "other", 0.01)  # switch: fake unloaded
+    generate(Prompt("a"), "fake", 0.01)  # switch back: other unloaded
+    assert calls == ["fake", "other"]
+
+
 def test_all_backends_import_without_torch_loaded():
     import importlib
     import sys
@@ -65,7 +88,8 @@ def test_all_backends_import_without_torch_loaded():
     from samplebot.core import BACKENDS
 
     for mod in BACKENDS.values():
-        assert callable(importlib.import_module(mod).generate)
+        m = importlib.import_module(mod)
+        assert callable(m.generate) and callable(m.unload)
     assert "torch" not in sys.modules  # heavy imports stay inside generate()/pipe()
 
 
