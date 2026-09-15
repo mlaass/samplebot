@@ -71,3 +71,12 @@ def test_cli_gen_optimize_bakes_keywords(tmp_path, monkeypatch):
     main(["gen", "wind", "-p", "gusty", "-n", "music", "-s", "0.1", "--optimize", "x", "-o", "w.wav"])
     meta = json.loads((tmp_path / "w.json").read_text())
     assert meta["text"] == "LLM(wind, gusty)" and meta["positive"] == [] and meta["negative"] == ["music"] and meta["source"] == "wind"
+
+
+def test_moss_backend_reports_missing_venv(monkeypatch):
+    import samplebot.backends.moss as moss
+
+    monkeypatch.setattr(moss, "PYTHON", "/nonexistent/python")
+    moss.worker.cache_clear()
+    with pytest.raises(RuntimeError, match="create the MOSS venv"):
+        moss.generate("x", "", 1, 0, 0)

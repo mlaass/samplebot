@@ -80,20 +80,46 @@ write_wav("dog.wav", audio, sr)
 
 ## Downloads
 
-Models are pulled from Hugging Face into `~/.cache/huggingface` on first use (AudioLDM2 ≈ 4.5 GB). If the direct
-CDN is slow (it was ~150 KB/s here), use the mirror:
+Models are pulled from Hugging Face into `~/.cache/huggingface` on first use (sizes in the table below).
+
+The CDN throttles per connection (~250 KB/s here). `hf_xet` (the default) stalls on it and `hf_transfer` gets
+rate-limited with its 100 connections and throws the partial file away, so samplebot has its own resumable
+range downloader:
 
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com HF_HUB_DISABLE_XET=1
+uv run samplebot fetch cvssp/audioldm-s-full-v2 declare-lab/TangoFlux google/flan-t5-large -j 40
 ```
+
+Files land in `models/<repo>/` (override with `SAMPLEBOT_MODELS`) and the backends use that copy when it exists.
+Interrupt and rerun freely: finished chunks are recorded and skipped. 40 workers gave ~3.5 MB/s here.
 
 After the first download, `HF_HUB_OFFLINE=1` skips the Hub round-trip and loads straight from cache.
 
 ## Models
 
+| name | model | output | negative prompt | download | notes |
+|---|---|---|---|---|---|
+| `fake` | none | 16 kHz mono | ignored | none | deterministic tone for tests |
+| `audioldm` | `cvssp/audioldm-s-full-v2` | 16 kHz mono | yes | 1.7 GB | fastest real model, default 50 steps |
+| `audioldm2` | `cvssp/audioldm2` | 16 kHz mono | yes | 4.5 GB | default 200 steps, ~7 s per 5 s clip at 50 |
+| `tangoflux` | `declare-lab/TangoFlux` | 44.1 kHz stereo, ≤ 30 s | yes (used as the CFG unconditional text) | 4 GB + 3 GB flan-t5-large | CC-BY-NC, inference vendored in `backends/tangoflux.py` |
+| `moss` | `OpenMOSS-Team/MOSS-SoundEffect-v2.0` | 48 kHz, ≤ 30 s | yes | 11 GB | Apache-2.0, needs the separate venv below, default 100 steps |
+| `stable-audio` | `stabilityai/stable-audio-open-1.0` | 44.1 kHz stereo, ≤ 47 s | yes | 5 GB | gated, needs `HF_TOKEN` |
+
 - **audioldm2** — `cvssp/audioldm2`, ungated, 16 kHz mono. ~7 s per 5 s clip at 50 steps on an RTX 5060 Ti (fp16). Needs `transformers<4.50` (pinned): newer versions drop a GPT2 helper the diffusers pipeline still calls. Override with `SAMPLEBOT_AUDIOLDM2=cvssp/audioldm2-large`.
 - **stable-audio** — `stabilityai/stable-audio-open-1.0`, 44.1 kHz stereo, up to 47 s. Gated: accept the license on
   Hugging Face, then `export HF_TOKEN=hf_...` (or `uv run hf auth login`).
+- **moss** — MOSS-SoundEffect v2 pins `transformers==4.57.1` and `diffusers==0.37.1`, which conflict with the AudioLDM2
+  pin, so it gets its own venv and runs as a worker subprocess (`backends/moss_worker.py`). One-time setup:
+
+  ```bash
+  uv venv vendor/moss-venv --python 3.12
+  uv pip install --python vendor/moss-venv/bin/python torch torchaudio hf_transfer \
+      "moss-soundeffect-v2 @ git+https://github.com/OpenMOSS/MOSS-TTS#subdirectory=moss_soundeffect_v2"
+  ```
+
+  Override the interpreter with `SAMPLEBOT_MOSS_PYTHON`. The first call compiles the DiT with torch.compile (minutes);
+  `TORCHDYNAMO_DISABLE=1` skips that if Triton misbehaves.
 
 ## Tests
 

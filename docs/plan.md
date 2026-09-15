@@ -18,11 +18,13 @@ over positive/negative keywords and optional prompt optimization by a local LLM 
 | Backend | Status | Why |
 |---|---|---|
 | `fake` | done | deterministic tone; makes tests and the CLI runnable without GPU |
+| `audioldm` | done | AudioLDM v1 small, ungated, 1.7 GB, fastest; same API as audioldm2 |
 | `audioldm2` | done | ungated, in `diffusers`, native `negative_prompt`, 16 kHz mono, ≤ ~10 s useful |
+| `tangoflux` | done | ungated, 44.1 kHz stereo, ≤ 30 s, CC-BY-NC. Upstream package pins torch 2.4, so the ~90-line inference path is vendored |
+| `moss` | done | MOSS-SoundEffect v2, 48 kHz, ≤ 30 s, Apache-2.0, 11 GB. Pins conflict with ours → own venv + worker subprocess |
 | `stable-audio` | code done, untested | gated repo; needs `HF_TOKEN`. 44.1 kHz stereo, ≤ 47 s, native `negative_prompt` |
-| MOSS-SoundEffect v2 | deferred | 11 GB, own package (`moss_soundeffect_v2`, torch.compile+Triton), no negative prompt. Best quality candidate once disk is freed |
-| AudioGen | deferred | `audiocraft` pins old torch; conflicts with sm_120 wheels. Run in Docker if ever needed |
-| Tango 2 | deferred | custom repo code, no negative prompt, superseded by the above |
+| AudioGen | skipped | `audiocraft` pins torch 2.1, which has no sm_120 kernels for this GPU. Superseded by tangoflux/moss |
+| Tango 2 | skipped | 16 kHz, custom repo code, no negative prompt; TangoFlux is its successor |
 
 ## Phases
 
@@ -31,8 +33,8 @@ over positive/negative keywords and optional prompt optimization by a local LLM 
 3. Docs: this plan, usage. ✅
 3b. Dashboard: `samplebot serve`, stdlib http.server + one HTML page over the `.json` sidecars. ✅
 3c. Generate from the dashboard (form + `POST /api/generate`), reuse / variation buttons on every run. ✅
-4. Next iteration candidates (not built, add when needed):
-   - MOSS-SoundEffect v2 backend behind an extra, once ~12 GB disk is available.
+4. More models: `audioldm`, `tangoflux`, `moss` backends. ✅ (see table above)
+5. Next iteration candidates (not built, add when needed):
    - Batch mode from a JSON/CSV list of prompts.
    - Optimizer that also proposes negative keywords.
 

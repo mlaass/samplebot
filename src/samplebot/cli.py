@@ -27,6 +27,10 @@ def build_parser():
     o.add_argument("prompt")
     o.add_argument("--llm", default=None)
 
+    fe = sub.add_parser("fetch", help="download model repos into models/ with a resumable parallel downloader")
+    fe.add_argument("repo", nargs="+", help="Hugging Face repo id, e.g. declare-lab/TangoFlux")
+    fe.add_argument("-j", "--workers", type=int, default=12)
+
     sv = sub.add_parser("serve", help="dashboard: browse and listen to previous runs")
     sv.add_argument("-d", "--dir", type=Path, default=Path("out"))
     sv.add_argument("--host", default="127.0.0.1")
@@ -47,6 +51,14 @@ def cmd_optimize(a) -> int:
     return 0
 
 
+def cmd_fetch(a) -> int:
+    from samplebot.fetch import fetch
+
+    for repo in a.repo:
+        print(fetch(repo, a.workers))
+    return 0
+
+
 def cmd_serve(a) -> int:
     from samplebot.dashboard import serve
 
@@ -59,7 +71,7 @@ def main(argv=None) -> int:
     if a.cmd == "models":
         print("\n".join(BACKENDS))
         return 0
-    return {"gen": cmd_gen, "optimize": cmd_optimize, "serve": cmd_serve}[a.cmd](a)
+    return {"gen": cmd_gen, "optimize": cmd_optimize, "serve": cmd_serve, "fetch": cmd_fetch}[a.cmd](a)
 
 
 if __name__ == "__main__":

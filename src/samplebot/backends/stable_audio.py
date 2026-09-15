@@ -5,7 +5,9 @@ import os
 
 import numpy as np
 
-MODEL = os.environ.get("SAMPLEBOT_STABLE_AUDIO", "stabilityai/stable-audio-open-1.0")
+from samplebot.fetch import model_path
+
+MODEL = os.environ.get("SAMPLEBOT_STABLE_AUDIO") or model_path("stabilityai/stable-audio-open-1.0")
 
 
 @functools.cache

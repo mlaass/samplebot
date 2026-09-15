@@ -4,3 +4,5 @@ __pycache__/
 out/
 dist/
 .pytest_cache/
+vendor/
+models/

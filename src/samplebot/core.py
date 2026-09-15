@@ -10,8 +10,11 @@ import numpy as np
 # name -> module path. Each module exposes generate(prompt, negative, seconds, seed, steps) -> (audio[C, T] float32, sample_rate)
 BACKENDS = {
     "fake": "samplebot.backends.fake",
+    "audioldm": "samplebot.backends.audioldm",
     "audioldm2": "samplebot.backends.audioldm2",
     "stable-audio": "samplebot.backends.stable_audio",
+    "tangoflux": "samplebot.backends.tangoflux",
+    "moss": "samplebot.backends.moss",
 }
 
 
