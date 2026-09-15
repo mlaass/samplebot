@@ -100,10 +100,10 @@ After the first download, `HF_HUB_OFFLINE=1` skips the Hub round-trip and loads 
 | name | model | output | negative prompt | download | notes |
 |---|---|---|---|---|---|
 | `fake` | none | 16 kHz mono | ignored | none | deterministic tone for tests |
-| `audioldm` | `cvssp/audioldm-s-full-v2` | 16 kHz mono | yes | 1.7 GB | fastest real model, default 50 steps |
+| `audioldm` | `cvssp/audioldm-s-full-v2` | 16 kHz mono | yes | 1.7 GB | fastest: 5 s clip in ~5 s incl. load, default 50 steps |
 | `audioldm2` | `cvssp/audioldm2` | 16 kHz mono | yes | 4.5 GB | default 200 steps, ~7 s per 5 s clip at 50 |
-| `tangoflux` | `declare-lab/TangoFlux` | 44.1 kHz stereo, ≤ 30 s | yes (used as the CFG unconditional text) | 4 GB + 3 GB flan-t5-large | CC-BY-NC, inference vendored in `backends/tangoflux.py` |
-| `moss` | `OpenMOSS-Team/MOSS-SoundEffect-v2.0` | 48 kHz, ≤ 30 s | yes | 11 GB | Apache-2.0, needs the separate venv below, default 100 steps |
+| `tangoflux` | `declare-lab/TangoFlux` | 44.1 kHz stereo, ≤ 30 s | yes (used as the CFG unconditional text) | 4 GB + 3 GB flan-t5-large | CC-BY-NC, inference vendored in `backends/tangoflux.py`; 5 s clip in ~14 s at 50 steps |
+| `moss` | `OpenMOSS-Team/MOSS-SoundEffect-v2.0` | 48 kHz, ≤ 30 s | yes | 11 GB | Apache-2.0, needs the separate venv below, default 100 steps (~26 s per 5 s clip after the first call); output is quiet, normalize downstream |
 | `stable-audio` | `stabilityai/stable-audio-open-1.0` | 44.1 kHz stereo, ≤ 47 s | yes | 5 GB | gated, needs `HF_TOKEN` |
 
 - **audioldm2** — `cvssp/audioldm2`, ungated, 16 kHz mono. ~7 s per 5 s clip at 50 steps on an RTX 5060 Ti (fp16). Needs `transformers<4.50` (pinned): newer versions drop a GPT2 helper the diffusers pipeline still calls. Override with `SAMPLEBOT_AUDIOLDM2=cvssp/audioldm2-large`.

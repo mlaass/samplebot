@@ -21,8 +21,8 @@ over positive/negative keywords and optional prompt optimization by a local LLM 
 | `audioldm` | done, verified | AudioLDM v1 small, ungated, 1.7 GB, fastest (5 s clip in ~5 s incl. load); same API as audioldm2 |
 | `audioldm2` | done | ungated, in `diffusers`, native `negative_prompt`, 16 kHz mono, ≤ ~10 s useful |
 | `tangoflux` | done, verified (5 s stereo clip in ~10 s incl. load at 25 steps) | ungated, 44.1 kHz stereo, ≤ 30 s, CC-BY-NC. Upstream package pins torch 2.4, so the ~90-line inference path is vendored |
-| `moss` | done | MOSS-SoundEffect v2, 48 kHz, ≤ 30 s, Apache-2.0, 11 GB. Pins conflict with ours → own venv + worker subprocess |
-| `stable-audio` | code done, untested | gated repo; needs `HF_TOKEN`. 44.1 kHz stereo, ≤ 47 s, native `negative_prompt` |
+| `moss` | done, verified (5 s clip, 100 steps ≈ 2 min on first call incl. warm-up, ~26 s after; output level is low, peak ≈ 0.13) | MOSS-SoundEffect v2, 48 kHz, ≤ 30 s, Apache-2.0, 11 GB. Pins conflict with ours → own venv + worker subprocess. Emits recoverable CUDA OOM allocator warnings on 16 GB |
+| `stable-audio` | code done, untested, BLOCKED | gated repo; needs `HF_TOKEN` (user action). 44.1 kHz stereo, ≤ 47 s, native `negative_prompt` |
 | AudioGen | skipped | `audiocraft` pins torch 2.1, which has no sm_120 kernels for this GPU. Superseded by tangoflux/moss |
 | Tango 2 | skipped | 16 kHz, custom repo code, no negative prompt; TangoFlux is its successor |
 

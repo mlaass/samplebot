@@ -12,8 +12,8 @@ from moss_soundeffect_v2 import MossSoundEffectPipeline
 proto = os.fdopen(os.dup(1), "w")  # keep the real stdout for the protocol...
 sys.stdout = sys.stderr  # ...and send anything the pipeline prints to stderr
 
-pipe = MossSoundEffectPipeline.from_pretrained(os.environ["SAMPLEBOT_MOSS"]  # local models/ dir or hub id, resolved by moss.py,
-                                               torch_dtype=torch.bfloat16, device="cuda" if torch.cuda.is_available() else "cpu")
+MODEL = os.environ["SAMPLEBOT_MOSS"]  # local models/ dir or hub id, resolved by moss.py
+pipe = MossSoundEffectPipeline.from_pretrained(MODEL, torch_dtype=torch.bfloat16, device="cuda" if torch.cuda.is_available() else "cpu")
 proto.write(json.dumps({"ready": True, "sr": pipe.sample_rate}) + "\n")
 proto.flush()
 

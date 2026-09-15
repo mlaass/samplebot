@@ -80,3 +80,10 @@ def test_moss_backend_reports_missing_venv(monkeypatch):
     moss.worker.cache_clear()
     with pytest.raises(RuntimeError, match="create the MOSS venv"):
         moss.generate("x", "", 1, 0, 0)
+
+
+def test_moss_worker_compiles():
+    import py_compile
+    from samplebot.backends.moss import WORKER
+
+    py_compile.compile(str(WORKER), doraise=True)
