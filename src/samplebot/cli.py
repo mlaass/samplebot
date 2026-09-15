@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -66,7 +67,17 @@ def cmd_serve(a) -> int:
     return 0
 
 
+def load_dotenv(path=Path(".env")):
+    """KEY=VALUE lines into os.environ (existing vars win). Enough for HF_TOKEN; no dependency."""
+    if path.exists():
+        for line in path.read_text().splitlines():
+            k, _, v = line.partition("=")
+            if k.strip() and not k.startswith("#") and _:
+                os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
+
 def main(argv=None) -> int:
+    load_dotenv()
     a = build_parser().parse_args(argv)
     if a.cmd == "models":
         print("\n".join(BACKENDS))

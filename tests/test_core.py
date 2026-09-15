@@ -87,3 +87,16 @@ def test_moss_worker_compiles():
     from samplebot.backends.moss import WORKER
 
     py_compile.compile(str(WORKER), doraise=True)
+
+
+def test_load_dotenv(tmp_path, monkeypatch):
+    from samplebot.cli import load_dotenv
+
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.setenv("KEEP", "orig")
+    f = tmp_path / ".env"
+    f.write_text("# comment\nHF_TOKEN='hf_x'\nKEEP=new\nBROKEN\n")
+    load_dotenv(f)
+    import os
+
+    assert os.environ["HF_TOKEN"] == "hf_x" and os.environ["KEEP"] == "orig"
