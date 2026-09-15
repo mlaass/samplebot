@@ -16,9 +16,9 @@ class RangeHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/api/models/"):
             body = json.dumps({"siblings": [{"rfilename": "unet/w.safetensors", "size": len(BLOB)}, {"rfilename": "unet/pytorch_model.bin", "size": 1}, {"rfilename": "unet/flax_model.msgpack", "size": 1},
-                                            {"rfilename": "config.json", "size": 2}]}).encode()
+                                            {"rfilename": "config.json", "size": 2}, {"rfilename": "notes.txt", "size": 2}]}).encode()
             return self._send(200, body)
-        if self.path.endswith("config.json"):
+        if self.path.endswith((".json", ".txt")) and "/resolve/" in self.path:
             return self._send(200, b"{}")
         rng = self.headers.get("Range", "bytes=0-").removeprefix("bytes=")
         start, end = (int(x) for x in rng.split("-"))
@@ -54,9 +54,10 @@ def hub(monkeypatch, tmp_path):
 
 def test_fetch_parallel_ranges_with_retry_and_skips_duplicate_bin(hub, tmp_path):
     RangeHandler.fail_first = {300_000}
-    dest = fetch.fetch("acme/model", workers=4, log=io.StringIO())
+    dest = fetch.fetch("acme/model", workers=4, log=io.StringIO(), exclude=("*.txt",))
     assert (dest / "unet/w.safetensors").read_bytes() == BLOB
-    assert not (dest / "unet/pytorch_model.bin").exists() and not (dest / "unet/flax_model.msgpack").exists() and (dest / "config.json").exists()
+    assert (dest / "config.json").exists() and not (dest / "notes.txt").exists()  # excluded by glob
+    assert not (dest / "unet/pytorch_model.bin").exists() and not (dest / "unet/flax_model.msgpack").exists()
     assert not list(dest.rglob("*.part")) and not list(dest.rglob("*.done"))
     assert fetch.model_path("acme/model") == str(dest) and fetch.model_path("acme/other") == "acme/other"
 

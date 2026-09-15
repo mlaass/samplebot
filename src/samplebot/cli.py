@@ -31,6 +31,7 @@ def build_parser():
     fe = sub.add_parser("fetch", help="download model repos into models/ with a resumable parallel downloader")
     fe.add_argument("repo", nargs="+", help="Hugging Face repo id, e.g. declare-lab/TangoFlux")
     fe.add_argument("-j", "--workers", type=int, default=12)
+    fe.add_argument("-x", "--exclude", action="append", default=[], metavar="GLOB", help="skip files matching this glob (repeatable)")
 
     sv = sub.add_parser("serve", help="dashboard: browse and listen to previous runs")
     sv.add_argument("-d", "--dir", type=Path, default=Path("out"))
@@ -56,7 +57,7 @@ def cmd_fetch(a) -> int:
     from samplebot.fetch import fetch
 
     for repo in a.repo:
-        print(fetch(repo, a.workers))
+        print(fetch(repo, a.workers, exclude=tuple(a.exclude)))
     return 0
 
 

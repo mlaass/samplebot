@@ -5,6 +5,7 @@ so this fetches fixed-size ranges with a thread pool, writes them in place, and 
 interrupted run resumes. Files land in models/<repo>/ with the repo layout, which from_pretrained accepts as-is.
 """
 
+import fnmatch
 import json
 import os
 import sys
@@ -83,8 +84,10 @@ def download(url: str, dest: Path, size: int, workers: int = 12, log=sys.stderr)
     return dest
 
 
-def fetch(repo: str, workers: int = 12, log=sys.stderr) -> Path:
+def fetch(repo: str, workers: int = 12, log=sys.stderr, exclude: tuple[str, ...] = ()) -> Path:
     dest = MODELS / repo
     for name, size in list_files(repo):
+        if any(fnmatch.fnmatch(name, pat) for pat in exclude):
+            continue
         download(f"{HF}/{repo}/resolve/main/{name}", dest / name, size, workers, log)
     return dest
