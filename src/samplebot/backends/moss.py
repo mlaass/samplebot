@@ -28,7 +28,7 @@ def worker() -> subprocess.Popen:
                          env={**os.environ, "SAMPLEBOT_MOSS": os.environ.get("SAMPLEBOT_MOSS") or model_path("OpenMOSS-Team/MOSS-SoundEffect-v2.0")})
     line = p.stdout.readline()  # blocks until the model is loaded
     if not line:
-        raise RuntimeError(f"moss worker exited with {p.wait()} before becoming ready")
+        raise RuntimeError(f"moss worker exited with {p.wait()} before becoming ready (see stderr above; moss needs ~10 GB free VRAM, check nvidia-smi)")
     return p
 
 
