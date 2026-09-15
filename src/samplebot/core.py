@@ -1,5 +1,6 @@
 import importlib
 import json
+import re
 import wave
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
@@ -54,3 +55,28 @@ def write_wav(path: Path, audio: np.ndarray, sr: int, meta: dict | None = None) 
 
 def prompt_meta(prompt: Prompt, **kw) -> dict:
     return {**asdict(prompt), **kw}
+
+
+def slug(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:60] or "sound"
+
+
+def run(prompt: Prompt, model: str = "fake", seconds: float = 5.0, seed: int = 0, steps: int = 0, count: int = 1,
+        out_dir: Path = Path("out"), out: Path | None = None, optimize: str | None = None) -> list[Path]:
+    """Generate `count` variations (seed increments) and write wav + json sidecar. optimize = Ollama model name or "" for default."""
+    source = prompt.text
+    if optimize is not None:
+        from samplebot.optimize import DEFAULT_LLM, optimize as _optimize
+
+        # keywords go into the LLM too, so they are baked into the rewritten text and not appended twice
+        prompt = Prompt(_optimize(prompt.positive_text(), optimize or DEFAULT_LLM), negative=prompt.negative)
+    paths = []
+    for i in range(count):
+        s = seed + i
+        audio, sr = generate(prompt, model, seconds, s, steps)
+        path = out or Path(out_dir) / f"{slug(prompt.text)}-{model}-{s}.wav"
+        if out and count > 1:
+            path = out.with_stem(f"{out.stem}-{s}")
+        meta = prompt_meta(prompt, source=source, model=model, seconds=seconds, seed=s, steps=steps, sample_rate=sr)
+        paths.append(write_wav(path, audio, sr, meta))
+    return paths

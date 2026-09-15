@@ -49,7 +49,25 @@ uv run samplebot serve -d ~/sfx --port 9000
 ```
 
 Lists every run (newest first) with its prompt, keywords, model, seconds, seed and steps, with an inline player and a
-text filter, plus a "play all" button and an "autoplay next" toggle that plays the listed runs in order. Stdlib `http.server`, no build step: it reads the `.json` sidecars next to the `.wav` files.
+text filter, plus a "play all" button and an "autoplay next" toggle that plays the listed runs in order.
+
+The form at the top generates from the browser with the same controls as the CLI (prompt, positive/negative keywords,
+model, seconds, seed, steps, count, optional LLM optimization). Each run has two buttons:
+
+- **reuse** loads that run's prompt and parameters into the form so you can tweak and regenerate.
+- **variation** regenerates immediately with the same parameters and the next seed.
+
+Generation runs inside the server process, one at a time, so the page waits while the GPU works (about 10 s for a
+5 s AudioLDM2 clip). Stdlib `http.server`, no build step: it reads the `.json` sidecars next to the `.wav` files.
+
+HTTP API (what the page uses):
+
+```
+GET  /api/models                 -> ["fake", "audioldm2", "stable-audio"]
+GET  /api/runs                   -> [{text, positive, negative, model, seconds, seed, steps, wav, mtime, ...}]
+POST /api/generate  {"text": "...", "negative": ["music"], "model": "audioldm2", "seconds": 5, "seed": 0, "steps": 0, "count": 1, "optimize": null}
+                                 -> {"paths": ["....wav"]}  or 500 {"error": "..."}
+```
 
 ## Python API
 

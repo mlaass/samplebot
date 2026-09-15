@@ -1,13 +1,8 @@
 import argparse
-import re
 import sys
 from pathlib import Path
 
-from samplebot.core import BACKENDS, Prompt, generate, prompt_meta, write_wav
-
-
-def slug(s: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:60] or "sound"
+from samplebot.core import BACKENDS, Prompt, run
 
 
 def build_parser():
@@ -40,21 +35,8 @@ def build_parser():
 
 
 def cmd_gen(a) -> int:
-    prompt = Prompt(a.prompt, a.positive, a.negative)
-    if a.optimize is not None:
-        from samplebot.optimize import DEFAULT_LLM, optimize
-
-        # keywords go into the LLM too, so they are baked into the rewritten text and not appended twice
-        prompt = Prompt(optimize(prompt.positive_text(), a.optimize or DEFAULT_LLM), negative=a.negative)
-        print(f"optimized prompt: {prompt.text}", file=sys.stderr)
-    for i in range(a.count):
-        seed = a.seed + i
-        audio, sr = generate(prompt, a.model, a.seconds, seed, a.steps)
-        out = a.out or Path("out") / f"{slug(prompt.text)}-{a.model}-{seed}.wav"
-        if a.out and a.count > 1:
-            out = a.out.with_stem(f"{a.out.stem}-{seed}")
-        write_wav(out, audio, sr, prompt_meta(prompt, source=a.prompt, model=a.model, seconds=a.seconds, seed=seed, steps=a.steps, sample_rate=sr))
-        print(out)
+    for path in run(Prompt(a.prompt, a.positive, a.negative), a.model, a.seconds, a.seed, a.steps, a.count, out=a.out, optimize=a.optimize):
+        print(path)
     return 0
 
 
