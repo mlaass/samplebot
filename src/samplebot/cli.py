@@ -39,7 +39,8 @@ def cmd_gen(a) -> int:
     if a.optimize is not None:
         from samplebot.optimize import DEFAULT_LLM, optimize
 
-        prompt.text = optimize(a.prompt, a.optimize or DEFAULT_LLM)
+        # keywords go into the LLM too, so they are baked into the rewritten text and not appended twice
+        prompt = Prompt(optimize(prompt.positive_text(), a.optimize or DEFAULT_LLM), negative=a.negative)
         print(f"optimized prompt: {prompt.text}", file=sys.stderr)
     for i in range(a.count):
         seed = a.seed + i
@@ -47,7 +48,7 @@ def cmd_gen(a) -> int:
         out = a.out or Path("out") / f"{slug(prompt.text)}-{a.model}-{seed}.wav"
         if a.out and a.count > 1:
             out = a.out.with_stem(f"{a.out.stem}-{seed}")
-        write_wav(out, audio, sr, prompt_meta(prompt, model=a.model, seconds=a.seconds, seed=seed, steps=a.steps, sample_rate=sr))
+        write_wav(out, audio, sr, prompt_meta(prompt, source=a.prompt, model=a.model, seconds=a.seconds, seed=seed, steps=a.steps, sample_rate=sr))
         print(out)
     return 0
 

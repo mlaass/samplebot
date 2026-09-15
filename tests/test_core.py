@@ -50,3 +50,24 @@ def test_cli_gen(tmp_path, capsys, monkeypatch):
 def test_cli_models(capsys):
     main(["models"])
     assert "fake" in capsys.readouterr().out.split()
+
+
+def test_all_backends_import_without_torch_loaded():
+    import importlib
+    import sys
+
+    from samplebot.core import BACKENDS
+
+    for mod in BACKENDS.values():
+        assert callable(importlib.import_module(mod).generate)
+    assert "torch" not in sys.modules  # heavy imports stay inside generate()/pipe()
+
+
+def test_cli_gen_optimize_bakes_keywords(tmp_path, monkeypatch):
+    import samplebot.optimize
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(samplebot.optimize, "optimize", lambda text, llm: f"LLM({text})")
+    main(["gen", "wind", "-p", "gusty", "-n", "music", "-s", "0.1", "--optimize", "x", "-o", "w.wav"])
+    meta = json.loads((tmp_path / "w.json").read_text())
+    assert meta["text"] == "LLM(wind, gusty)" and meta["positive"] == [] and meta["negative"] == ["music"] and meta["source"] == "wind"
