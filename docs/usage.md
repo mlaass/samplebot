@@ -44,7 +44,7 @@ Env: `OLLAMA_HOST` (default `http://localhost:11434`), `SAMPLEBOT_LLM` (default 
 ## Dashboard
 
 ```bash
-uv run samplebot serve            # http://127.0.0.1:8765/ , serves ./out
+uv run samplebot serve            # http://127.0.0.1:7333/ , serves ./out (falls back to a free port if 7333 is taken)
 uv run samplebot serve -d ~/sfx --port 9000
 ```
 

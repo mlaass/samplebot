@@ -60,13 +60,23 @@ class Handler(SimpleHTTPRequestHandler):
         pass
 
 
-def make_server(directory: Path, host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), functools.partial(Handler, directory=str(directory)))
+DEFAULT_PORT = 7333
 
 
-def serve(directory: Path, host: str = "127.0.0.1", port: int = 8765):
+def make_server(directory: Path, host: str = "127.0.0.1", port: int = DEFAULT_PORT) -> ThreadingHTTPServer:
+    handler = functools.partial(Handler, directory=str(directory))
+    try:
+        return ThreadingHTTPServer((host, port), handler)
+    except OSError as e:
+        if port == 0:
+            raise
+        print(f"port {port} in use ({e.strerror}), picking a free one", flush=True)
+        return ThreadingHTTPServer((host, 0), handler)
+
+
+def serve(directory: Path, host: str = "127.0.0.1", port: int = DEFAULT_PORT):
     srv = make_server(directory, host, port)
-    print(f"samplebot dashboard: http://{host}:{srv.server_port}/  (serving {Path(directory).resolve()})")
+    print(f"samplebot dashboard: http://{host}:{srv.server_port}/  (serving {Path(directory).resolve()})", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

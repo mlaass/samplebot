@@ -35,7 +35,7 @@ def build_parser():
     sv = sub.add_parser("serve", help="dashboard: browse and listen to previous runs")
     sv.add_argument("-d", "--dir", type=Path, default=Path("out"))
     sv.add_argument("--host", default="127.0.0.1")
-    sv.add_argument("--port", type=int, default=8765)
+    sv.add_argument("--port", type=int, default=7333, help="default 7333; falls back to a free port if taken")
     return p
 
 

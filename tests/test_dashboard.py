@@ -24,3 +24,10 @@ def test_dashboard_lists_and_serves_runs(tmp_path, monkeypatch):
         assert wav.headers["Content-Type"].startswith("audio/") and wav.read()[:4] == b"RIFF"
     finally:
         srv.shutdown()
+
+
+def test_make_server_falls_back_when_port_taken(tmp_path):
+    a = make_server(tmp_path, port=0)
+    b = make_server(tmp_path, port=a.server_port)  # taken -> free port, no crash
+    assert b.server_port != a.server_port
+    a.server_close(), b.server_close()
