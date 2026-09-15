@@ -17,7 +17,8 @@ def test_dashboard_lists_and_serves_runs(tmp_path, monkeypatch):
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{srv.server_port}"
     try:
-        assert b"<title>samplebot runs" in urllib.request.urlopen(f"{base}/").read()
+        page = urllib.request.urlopen(f"{base}/").read()
+        assert b"<title>samplebot runs" in page and b'id=playall' in page and b'onended="onEnded(this)"' in page
         api = json.load(urllib.request.urlopen(f"{base}/api/runs"))
         assert [r["negative"] for r in api] == [["music"], ["music"]]
         wav = urllib.request.urlopen(f"{base}/{api[0]['wav']}")

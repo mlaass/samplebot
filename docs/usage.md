@@ -49,7 +49,7 @@ uv run samplebot serve -d ~/sfx --port 9000
 ```
 
 Lists every run (newest first) with its prompt, keywords, model, seconds, seed and steps, with an inline player and a
-text filter. Stdlib `http.server`, no build step: it reads the `.json` sidecars next to the `.wav` files.
+text filter, plus a "play all" button and an "autoplay next" toggle that plays the listed runs in order. Stdlib `http.server`, no build step: it reads the `.json` sidecars next to the `.wav` files.
 
 ## Python API
 

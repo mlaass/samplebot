@@ -8,20 +8,28 @@ from pathlib import Path
 PAGE = """<!doctype html><meta charset=utf-8><title>samplebot runs</title>
 <style>
 body{font:14px system-ui;margin:1.5rem;background:#111;color:#ddd}h1{font-size:1.2rem}
-input{width:100%;padding:.5rem;background:#222;color:#eee;border:1px solid #444;margin-bottom:1rem}
+#q{width:100%;padding:.5rem;background:#222;color:#eee;border:1px solid #444;margin-bottom:1rem}
 table{border-collapse:collapse;width:100%}td,th{padding:.4rem .6rem;border-bottom:1px solid #333;text-align:left;vertical-align:top}
 th{color:#999;font-weight:normal}code{color:#9cf}.neg{color:#f99}.src{color:#888}audio{width:260px}
+button{background:#333;color:#eee;border:1px solid #555;padding:.4rem .8rem;cursor:pointer}label{color:#aaa;margin-left:.6rem}
+tr.playing{background:#1e2a1e}
 </style>
 <h1>samplebot runs</h1><input id=q placeholder="filter by prompt, model, keyword…" autofocus>
+<p><button id=playall>▶ play all</button><label><input type=checkbox id=auto checked> autoplay next</label></p>
 <table><thead><tr><th>when</th><th>play</th><th>prompt</th><th>model</th><th>s</th><th>seed</th><th>steps</th><th>file</th></tr></thead><tbody id=rows></tbody></table>
 <script>
 let runs=[];const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function render(){const q=document.getElementById('q').value.toLowerCase();
 document.getElementById('rows').innerHTML=runs.filter(r=>JSON.stringify(r).toLowerCase().includes(q)).map(r=>`<tr>
-<td>${new Date(r.mtime*1000).toLocaleString()}</td><td><audio controls preload=none src="${esc(r.wav)}"></audio></td>
+<td>${new Date(r.mtime*1000).toLocaleString()}</td><td><audio controls preload=none src="${esc(r.wav)}" onplay="onPlay(this)" onended="onEnded(this)"></audio></td>
 <td>${esc(r.text)}${r.source&&r.source!==r.text?`<br><span class=src>from: ${esc(r.source)}</span>`:''}
 ${(r.positive||[]).length?`<br>+ ${esc(r.positive.join(', '))}`:''}${(r.negative||[]).length?`<br><span class=neg>− ${esc(r.negative.join(', '))}</span>`:''}</td>
 <td>${esc(r.model)}</td><td>${esc(r.seconds)}</td><td>${esc(r.seed)}</td><td>${esc(r.steps)}</td><td><code>${esc(r.wav)}</code></td></tr>`).join('')}
+const players=()=>[...document.querySelectorAll('audio')];
+function onPlay(a){players().forEach(o=>{if(o!==a)o.pause();o.closest('tr').classList.toggle('playing',o===a)})}
+function onEnded(a){a.closest('tr').classList.remove('playing');if(!document.getElementById('auto').checked)return;
+const ps=players(),n=ps[ps.indexOf(a)+1];if(n)n.play()}
+document.getElementById('playall').onclick=()=>{const p=players()[0];if(p){document.getElementById('auto').checked=true;p.play()}};
 fetch('api/runs').then(r=>r.json()).then(j=>{runs=j;render()});document.getElementById('q').oninput=render;
 </script>"""
 
