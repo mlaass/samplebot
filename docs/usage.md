@@ -29,8 +29,29 @@ Flags:
 | `--steps` | inference steps, `0` = backend default (audioldm2: 200, stable-audio: 100) |
 | `--optimize [LLM]` | rewrite the prompt with a local Ollama model first |
 | `-o/--out` | output path; default `out/<slug>-<model>-<seed>.wav` |
+| `--rate HZ` | resample the output to this sample rate with ffmpeg (e.g. `44100`; moss is 48 kHz, audioldm 16 kHz) |
 
-Every WAV gets a `.json` sidecar with all parameters.
+Every WAV gets a `.json` sidecar with all parameters, including `sample_rate` (written) and `native_rate` (the model's).
+WAVs are written to `<name>.tmp.wav` and renamed, so an existing `.wav` is always complete.
+
+## Batch
+
+```bash
+uv run samplebot batch jobs.json --rate 44100      # or: ... batch - < jobs.json
+```
+
+`jobs.json` is a list of jobs. `text`, `model` and `out` are required; the rest default like `gen`:
+
+```json
+[{"id": "axe_chop/r1-A-moss-1", "text": "axe chopping into a tree trunk", "positive": [], "negative": ["music"],
+  "model": "moss", "seconds": 1.5, "seed": 1, "steps": 0, "out": "/abs/path/axe_chop/r1-A-moss-1.wav"}]
+```
+
+- Jobs run grouped by model (in order of first appearance, file order within a model), so each model loads once.
+- Jobs whose `out` exists are skipped: rerun after an interruption and it resumes. `--force` regenerates them.
+- A failing job (CUDA OOM, unknown model, missing key) is printed with its id and the batch continues; exit code 1 if
+  any failed.
+- `id` is copied into the sidecar. Use absolute `out` paths: samplebot runs from its own directory (models, `.env`).
 
 ## Optimize only
 
@@ -65,9 +86,14 @@ HTTP API (what the page uses):
 ```
 GET  /api/models                 -> ["fake", "audioldm2", "stable-audio"]
 GET  /api/runs                   -> [{text, positive, negative, model, seconds, seed, steps, wav, mtime, ...}]
-POST /api/generate  {"text": "...", "negative": ["music"], "model": "audioldm2", "seconds": 5, "seed": 0, "steps": 0, "count": 1, "optimize": null}
-                                 -> {"paths": ["....wav"]}  or 500 {"error": "..."}
+POST /api/generate  {"text": "...", "negative": ["music"], "model": "audioldm2", "seconds": 5, "seed": 0, "steps": 0, "count": 1, "optimize": null,
+                     "rate": 44100, "out": "axe_chop/r2-ui1-moss-12.wav"}
+                                 -> {"paths": ["....wav"]}  or 400/500 {"error": "..."}
 ```
+
+`rate` and `out` are optional. `out` is a `.wav` path relative to the served directory; absolute paths, paths that escape
+the directory, and `out` with `count` > 1 are rejected with 400 (as are empty prompts and unknown models). Other
+failures are 500.
 
 ## Python API
 

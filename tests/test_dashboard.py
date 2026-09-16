@@ -1,4 +1,5 @@
 import json
+import shutil
 import threading
 import urllib.error
 import urllib.request
@@ -46,10 +47,25 @@ def test_api_generate(tmp_path, server):
 
     with pytest.raises(urllib.error.HTTPError) as e:
         post(f"{server}/api/generate", {"text": "x", "model": "nope"})
-    assert e.value.code == 500 and "unknown model" in json.load(e.value)["error"]
+    assert e.value.code == 400 and "unknown model" in json.load(e.value)["error"]
     with pytest.raises(urllib.error.HTTPError) as e:
         post(f"{server}/api/generate", {"text": "  "})
     assert "empty" in json.load(e.value)["error"]
+
+
+def test_api_generate_out_and_rate(tmp_path, server):
+    out = post(f"{server}/api/generate", {"text": "axe", "model": "fake", "seconds": 0.1, "seed": 2, "out": "axe_chop/r2-ui1-fake-2.wav"})
+    assert out["paths"] == ["axe_chop/r2-ui1-fake-2.wav"] and (tmp_path / "out/axe_chop/r2-ui1-fake-2.wav").exists()
+    if shutil.which("ffmpeg"):
+        post(f"{server}/api/generate", {"text": "axe", "model": "fake", "seconds": 0.1, "rate": 44100, "out": "r.wav"})
+        assert json.loads((tmp_path / "out/r.json").read_text())["sample_rate"] == 44100
+
+    for bad in ({"out": "../evil.wav"}, {"out": str(tmp_path / "abs.wav")}, {"out": "a/../../x.wav"}, {"out": "x.txt"},
+                {"out": "two.wav", "count": 2}):
+        with pytest.raises(urllib.error.HTTPError) as e:
+            post(f"{server}/api/generate", {"text": "axe", "model": "fake", "seconds": 0.1, **bad})
+        assert e.value.code == 400, bad
+    assert not (tmp_path / "evil.wav").exists() and not (tmp_path / "abs.wav").exists() and not (tmp_path / "x.wav").exists()
 
 
 def test_make_server_falls_back_when_port_taken(tmp_path):

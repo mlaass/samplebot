@@ -1,9 +1,10 @@
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
 
-from samplebot.core import BACKENDS, Prompt, run
+from samplebot.core import BACKENDS, Prompt, batch, run
 
 
 def build_parser():
@@ -21,6 +22,12 @@ def build_parser():
     g.add_argument("--optimize", nargs="?", const="", metavar="LLM", help="rewrite the prompt with a local Ollama LLM first")
     g.add_argument("-o", "--out", type=Path, help="output .wav (default: out/<slug>-<seed>.wav)")
     g.add_argument("-c", "--count", type=int, default=1, help="number of variations (seed increments)")
+    g.add_argument("--rate", type=int, metavar="HZ", help="resample the output to this sample rate (needs ffmpeg)")
+
+    b = sub.add_parser("batch", help="run a JSON list of jobs, grouped by model so each model loads once")
+    b.add_argument("jobs", help="jobs .json file, or - for stdin")
+    b.add_argument("--rate", type=int, metavar="HZ", help="resample every output to this sample rate (needs ffmpeg)")
+    b.add_argument("--force", action="store_true", help="regenerate jobs whose out file already exists")
 
     sub.add_parser("models", help="list generation backends")
 
@@ -41,9 +48,18 @@ def build_parser():
 
 
 def cmd_gen(a) -> int:
-    for path in run(Prompt(a.prompt, a.positive, a.negative), a.model, a.seconds, a.seed, a.steps, a.count, out=a.out, optimize=a.optimize):
+    for path in run(Prompt(a.prompt, a.positive, a.negative), a.model, a.seconds, a.seed, a.steps, a.count, out=a.out, optimize=a.optimize,
+                    rate=a.rate):
         print(path)
     return 0
+
+
+def cmd_batch(a) -> int:
+    jobs = json.loads(sys.stdin.read() if a.jobs == "-" else Path(a.jobs).read_text())
+    if not isinstance(jobs, list):
+        print("batch: jobs must be a JSON list", file=sys.stderr)
+        return 2
+    return 1 if batch(jobs, a.rate, a.force) else 0
 
 
 def cmd_optimize(a) -> int:
@@ -83,7 +99,7 @@ def main(argv=None) -> int:
     if a.cmd == "models":
         print("\n".join(BACKENDS))
         return 0
-    return {"gen": cmd_gen, "optimize": cmd_optimize, "serve": cmd_serve, "fetch": cmd_fetch}[a.cmd](a)
+    return {"gen": cmd_gen, "batch": cmd_batch, "optimize": cmd_optimize, "serve": cmd_serve, "fetch": cmd_fetch}[a.cmd](a)
 
 
 if __name__ == "__main__":

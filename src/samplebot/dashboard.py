@@ -90,12 +90,23 @@ def list_runs(directory: Path) -> list[dict]:
 
 
 def api_generate(directory: Path, req: dict) -> dict:
+    """Raises ValueError for a bad request (-> 400). `out` is a .wav path relative to the served directory and must stay inside it."""
+    directory = Path(directory).resolve()
     prompt = Prompt(str(req.get("text", "")).strip(), list(req.get("positive", [])), list(req.get("negative", [])))
     if not prompt.text:
         raise ValueError("prompt is empty")
+    count = max(1, int(req.get("count", 1)))
+    out = None
+    if req.get("out") is not None:
+        out = (directory / str(req["out"])).resolve()  # resolves "..", symlinks and absolute paths before the containment check
+        if not out.is_relative_to(directory) or out.suffix != ".wav":
+            raise ValueError(f"out must be a .wav path inside the served directory: {req['out']!r}")
+        if count != 1:
+            raise ValueError("out needs count 1")
+    rate = int(req["rate"]) if req.get("rate") else None
     with GEN_LOCK:
         paths = run(prompt, req.get("model", "fake"), float(req.get("seconds", 5)), int(req.get("seed", 0)), int(req.get("steps", 0)),
-                    max(1, int(req.get("count", 1))), out_dir=directory, optimize=req.get("optimize"))
+                    count, out_dir=directory, out=out, optimize=req.get("optimize"), rate=rate)
     return {"paths": [p.relative_to(directory).as_posix() for p in paths]}
 
 
@@ -118,7 +129,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(api_generate(Path(self.directory), req))
         except Exception as e:  # surface the real error in the UI
             traceback.print_exc()
-            return self._json({"error": f"{type(e).__name__}: {e}"}, 500)
+            return self._json({"error": f"{type(e).__name__}: {e}"}, 400 if isinstance(e, ValueError) else 500)
 
     def _json(self, obj, status=200):
         self._send(json.dumps(obj).encode(), "application/json", status)

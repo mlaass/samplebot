@@ -7,6 +7,7 @@ uv sync --extra gpu
 uv run samplebot gen "heavy rain hitting a tin roof" -n music -n speech -m audioldm2 -s 5
 uv run samplebot gen "door creak" -m audioldm2 --optimize    # prompt rewritten by a local Ollama LLM first
 uv run samplebot serve                                       # dashboard: browse, listen, generate, reuse runs
+uv run samplebot batch jobs.json --rate 44100               # many jobs, one model loaded at a time, resumable
 ```
 
 - Positive/negative keywords (`-p`, `-n`), seeds, variations, step count.

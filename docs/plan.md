@@ -34,8 +34,10 @@ over positive/negative keywords and optional prompt optimization by a local LLM 
 3b. Dashboard: `samplebot serve`, stdlib http.server + one HTML page over the `.json` sidecars. ✅
 3c. Generate from the dashboard (form + `POST /api/generate`), reuse / variation buttons on every run. ✅
 4. More models: `audioldm`, `tangoflux`, `moss` backends. ✅ (see table above)
-5. Next iteration candidates (not built, add when needed):
-   - Batch mode from a JSON/CSV list of prompts.
+5. `samplebot batch` (JSON jobs grouped by model, resumable, failures don't stop the run), `--rate` resampling via
+   ffmpeg, `out`/`rate` on `POST /api/generate`. Built for the settlement SFX pipeline
+   (`../settlement/docs/prd-sfx-generation-pipeline.md`, phase 1). ✅
+6. Next iteration candidates (not built, add when needed):
    - Optimizer that also proposes negative keywords.
 
 ## Architecture (deliberately small)
