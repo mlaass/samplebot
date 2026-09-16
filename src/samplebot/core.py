@@ -51,6 +51,17 @@ def generate(prompt: Prompt, model: str = "fake", seconds: float = 5.0, seed: in
     return audio, sr
 
 
+def unload() -> str | None:
+    """Free the resident model. Returns its name, or None if nothing was loaded."""
+    global _loaded
+    if _loaded is None:
+        return None
+    _loaded.unload()
+    name = next(k for k, v in BACKENDS.items() if v == _loaded.__name__)
+    _loaded = None
+    return name
+
+
 def write_wav(path: Path, audio: np.ndarray, sr: int, meta: dict | None = None) -> Path:
     """16-bit PCM WAV via stdlib. audio is [channels, samples] in [-1, 1]. Writes a .json sidecar if meta given."""
     path = Path(path)

@@ -73,3 +73,21 @@ def test_make_server_falls_back_when_port_taken(tmp_path):
     b = make_server(tmp_path, port=a.server_port)  # taken -> free port, no crash
     assert b.server_port != a.server_port
     a.server_close(), b.server_close()
+
+
+def test_cli_unload(tmp_path, monkeypatch, capsys, server):
+    import samplebot.backends.fake as fake
+    import samplebot.core as core
+
+    calls = []
+    monkeypatch.setattr(fake, "unload", lambda: calls.append("fake"))
+    monkeypatch.setattr(core, "_loaded", None)
+    post(f"{server}/api/generate", {"text": "x", "model": "fake", "seconds": 0.1})
+    port = server.rsplit(":", 1)[1]
+    assert main(["unload", "--port", port]) == 0 and main(["unload", "--port", port]) == 0
+    assert calls == ["fake"] and capsys.readouterr().out == "unloaded fake\nnothing loaded\n"
+
+    srv = make_server(tmp_path, port=0)
+    free = str(srv.server_port)
+    srv.server_close()  # nothing listens there now
+    assert main(["unload", "--port", free]) == 0 and "no dashboard" in capsys.readouterr().out

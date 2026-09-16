@@ -81,6 +81,15 @@ model, seconds, seed, steps, count, optional LLM optimization). Each run has two
 Generation runs inside the server process, one at a time, so the page waits while the GPU works (about 10 s for a
 5 s AudioLDM2 clip). Stdlib `http.server`, no build step: it reads the `.json` sidecars next to the `.wav` files.
 
+The dashboard keeps the last model on the GPU between requests. To free the VRAM without stopping the server:
+
+```bash
+uv run samplebot unload              # add --port N if serve fell back to another port
+```
+
+It waits for a running generation to finish. The next generate reloads the model. `gen` and `batch` free their model on
+exit, so a running dashboard is the only thing this needs to reach.
+
 HTTP API (what the page uses):
 
 ```
@@ -89,6 +98,7 @@ GET  /api/runs                   -> [{text, positive, negative, model, seconds, 
 POST /api/generate  {"text": "...", "negative": ["music"], "model": "audioldm2", "seconds": 5, "seed": 0, "steps": 0, "count": 1, "optimize": null,
                      "rate": 44100, "out": "axe_chop/r2-ui1-moss-12.wav"}
                                  -> {"paths": ["....wav"]}  or 400/500 {"error": "..."}
+POST /api/unload                 -> {"unloaded": "moss"}  or {"unloaded": null} if nothing was loaded
 ```
 
 `rate` and `out` are optional. `out` is a `.wav` path relative to the served directory; absolute paths, paths that escape

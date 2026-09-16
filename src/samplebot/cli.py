@@ -44,6 +44,10 @@ def build_parser():
     sv.add_argument("-d", "--dir", type=Path, default=Path("out"))
     sv.add_argument("--host", default="127.0.0.1")
     sv.add_argument("--port", type=int, default=7333, help="default 7333; falls back to a free port if taken")
+
+    u = sub.add_parser("unload", help="free the model a running dashboard holds on the GPU (gen and batch free theirs on exit)")
+    u.add_argument("--host", default="127.0.0.1")
+    u.add_argument("--port", type=int, default=7333, help="the port serve printed")
     return p
 
 
@@ -84,6 +88,23 @@ def cmd_serve(a) -> int:
     return 0
 
 
+def cmd_unload(a) -> int:
+    import urllib.error
+    import urllib.request
+
+    url = f"http://{a.host}:{a.port}/api/unload"
+    try:
+        name = json.load(urllib.request.urlopen(urllib.request.Request(url, b"", method="POST")))["unloaded"]
+    except urllib.error.HTTPError as e:  # e.g. 404 from a dashboard started before /api/unload existed: restart it
+        print(f"unload failed: {url} answered {e.code} {e.reason}", file=sys.stderr)
+        return 1
+    except urllib.error.URLError as e:
+        print(f"no dashboard at {url} ({e.reason}), nothing to unload")
+        return 0
+    print(f"unloaded {name}" if name else "nothing loaded")
+    return 0
+
+
 def load_dotenv(path=Path(".env")):
     """KEY=VALUE lines into os.environ (existing vars win). Enough for HF_TOKEN; no dependency."""
     if path.exists():
@@ -99,7 +120,7 @@ def main(argv=None) -> int:
     if a.cmd == "models":
         print("\n".join(BACKENDS))
         return 0
-    return {"gen": cmd_gen, "batch": cmd_batch, "optimize": cmd_optimize, "serve": cmd_serve, "fetch": cmd_fetch}[a.cmd](a)
+    return {"gen": cmd_gen, "batch": cmd_batch, "optimize": cmd_optimize, "serve": cmd_serve, "fetch": cmd_fetch, "unload": cmd_unload}[a.cmd](a)
 
 
 if __name__ == "__main__":

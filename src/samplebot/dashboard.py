@@ -7,7 +7,7 @@ import traceback
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from samplebot.core import BACKENDS, Prompt, run
+from samplebot.core import BACKENDS, Prompt, run, unload
 
 DEFAULT_PORT = 7333
 GEN_LOCK = threading.Lock()  # ponytail: one generation at a time, it is one GPU
@@ -122,6 +122,9 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
+        if self.path == "/api/unload":
+            with GEN_LOCK:  # waits for a running generation instead of pulling the model out from under it
+                return self._json({"unloaded": unload()})
         if self.path != "/api/generate":
             return self.send_error(404)
         try:
